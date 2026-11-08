@@ -2,101 +2,146 @@
 <html lang="de">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>SBA – Schulbank DEV</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#101827">
+  <title>SBA – Schulbank</title>
   <style>
     * { box-sizing: border-box; }
     body {
       margin: 0;
+      min-height: 100vh;
       font-family: Arial, sans-serif;
       background: #101827;
-      color: white;
+      color: #f5f7fb;
     }
     header {
-      padding: 24px;
-      background: #17243a;
-      border-bottom: 1px solid #34445c;
+      padding: 22px;
+      background: #172438;
+      border-bottom: 1px solid #34445b;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 12px;
     }
-    header h1 { margin: 0; }
-    header p { color: #a9bbd2; }
+    .logo { font-size: 25px; font-weight: bold; }
+    .dev {
+      color: #ffd166;
+      border: 1px solid #8b7137;
+      padding: 6px 10px;
+      border-radius: 8px;
+      font-size: 12px;
+    }
     main {
-      max-width: 850px;
-      margin: 50px auto;
-      padding: 20px;
+      width: min(900px, 92%);
+      margin: 65px auto;
       text-align: center;
     }
-    .status {
-      display: inline-block;
-      padding: 7px 12px;
-      border-radius: 20px;
-      background: #183d61;
-      color: #9bd3ff;
-      font-size: 13px;
+    h1 { font-size: clamp(30px, 6vw, 48px); }
+    .bank {
+      color: #80b7ff;
+      font-size: 20px;
+      margin: 15px 0;
     }
+    .status { color: #aebbd0; font-size: 14px; }
     .options {
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
       gap: 16px;
-      margin-top: 35px;
+      margin-top: 40px;
     }
     button {
-      padding: 25px 15px;
-      background: #1d304b;
-      color: white;
-      border: 1px solid #405878;
+      min-height: 110px;
+      border: 1px solid #40516b;
       border-radius: 14px;
+      background: #1b2b42;
+      color: white;
+      font-size: 17px;
       cursor: pointer;
-      font-size: 16px;
+      padding: 20px;
     }
-    button:hover { background: #29466a; }
-    #message {
-      margin-top: 25px;
-      color: #a9bbd2;
+    button:hover { background: #263c59; }
+    button span {
+      display: block;
+      color: #aebbd0;
+      font-size: 13px;
+      margin-top: 9px;
     }
     footer {
       text-align: center;
-      color: #8295ad;
+      color: #8291a8;
       padding: 25px;
+      font-size: 12px;
     }
   </style>
 </head>
 <body>
   <header>
-    <h1>SBA – Schulbank</h1>
-    <p>Das digitale Schulbanksystem</p>
-    <span class="status">DEV VERSION · TESTBETRIEB</span>
+    <div class="logo">SBA | Schulbank</div>
+    <div class="dev">DEV VERSION</div>
   </header>
 
   <main>
-    <h2>Willkommen bei SBA</h2>
-    <p>Wähle deinen gewünschten Bereich.</p>
+    <h1>Willkommen bei SBA</h1>
+    <div class="bank" id="bankName">Schulbank wird geladen ...</div>
+    <div class="status" id="apiStatus">Verbindung wird geprüft ...</div>
 
-    <div class="options">
-      <button onclick="showMessage('Offlinebanking')">
+    <section class="options">
+      <button onclick="showNotice('Offlinebanking')">
         Offlinebanking
+        <span>Bankfunktionen ohne Onlinekonto</span>
       </button>
-      <button onclick="showMessage('Login')">
-        Onlinebanking – Login
+      <button onclick="showNotice('Login')">
+        Login
+        <span>Bei deinem Konto anmelden</span>
       </button>
-      <button onclick="showMessage('Kontoerstellung')">
-        Onlinebanking – Konto erstellen
+      <button onclick="showNotice('Konto erstellen')">
+        Konto erstellen
+        <span>Ein neues Onlinekonto beantragen</span>
       </button>
-    </div>
-
-    <div id="message">
-      SBA DEV – Es sind noch keine echten Konten eingerichtet.
-    </div>
+    </section>
+    <p id="notice" role="status"></p>
   </main>
 
   <footer>
-    SBA Schulbank · Entwicklungsstand
+    SBA Schulbank · DEV · Testsystem – keine echten Bankgeschäfte
   </footer>
 
   <script>
-    function showMessage(area) {
-      document.getElementById("message").textContent =
-        area + " – Dieser Bereich befindet sich noch in Entwicklung.";
+    const API = "https://sba-dev-api.lukas-lalli.workers.dev";
+
+    async function loadBank() {
+      const name = document.getElementById("bankName");
+      const status = document.getElementById("apiStatus");
+
+      try {
+        const response = await fetch(API + "/api/tenants");
+        if (!response.ok) throw new Error("API-Fehler");
+
+        const data = await response.json();
+        const bank = data.tenants.find(
+          item => item.status === "active"
+        );
+
+        if (bank) {
+          name.textContent = bank.name;
+          status.textContent = "Datenbank verbunden · " + bank.bank_code;
+        } else {
+          name.textContent = "Keine aktive Schulbank gefunden";
+          status.textContent = "API erreichbar";
+        }
+      } catch (error) {
+        name.textContent = "SBA Test-Schulbank";
+        status.textContent = "Datenbank momentan nicht erreichbar";
+      }
     }
+
+    function showNotice(feature) {
+      document.getElementById("notice").textContent =
+        feature + " ist noch in Entwicklung.";
+    }
+
+    loadBank();
   </script>
 </body>
 </html>
